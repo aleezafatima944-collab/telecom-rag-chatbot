@@ -14,11 +14,11 @@ Merged Retriever (top-k from each store)
   └── ChromaDB · guides     (PDF guide chunks)
      │
      ▼
-ChatPromptTemplate → Qwen3-32B (Groq) → Answer
+ChatPromptTemplate → GPT-OSS-120B (Groq) → Answer
 ```
 
 **Embedding model:** `sentence-transformers/all-MiniLM-L6-v2` (runs locally via HuggingFace)  
-**LLM:** `qwen/qwen3-32b` served by [Groq](https://groq.com)
+**LLM:** `openai/gpt-oss-120b` served by [Groq](https://groq.com) (note: this project originally used `qwen/qwen3-32b`, which Groq later deprecated � swap in whichever production model is currently listed at console.groq.com/docs/models if this one changes too)
 
 ## Project Structure
 
@@ -48,7 +48,7 @@ rag-telecom-chatbot/
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/) (recommended) or pip
 - A [Groq API key](https://console.groq.com)
-- A [HuggingFace token](https://huggingface.co/settings/tokens) (for downloading the embedding model)
+- A [HuggingFace token](https://huggingface.co/settings/tokens) *(optional � only needed to avoid a rate-limit warning on first download; the app works fine without it)*
 
 ## Setup
 
