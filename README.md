@@ -1,63 +1,60 @@
-# RAG Telecom Chatbot
+# 📡 RAG Telecom Chatbot
 
-A Retrieval-Augmented Generation (RAG) customer care chatbot for telecom support. It answers questions about mobile connectivity, billing, SIM issues, and roaming by retrieving relevant context from three knowledge sources and generating responses with Qwen3-32B via Groq.
+A Retrieval-Augmented Generation (RAG) customer care chatbot for telecom support. It answers questions about mobile connectivity, billing, SIM issues, and roaming by retrieving relevant context from three knowledge sources and generating grounded responses via Groq.
 
 ## Architecture
-
-```
 User question
-     │
-     ▼
+│
+▼
 Merged Retriever (top-k from each store)
-  ├── ChromaDB · faq        (FAQ entries from CSV)
-  ├── ChromaDB · tickets    (resolved support tickets from SQLite)
-  └── ChromaDB · guides     (PDF guide chunks)
-     │
-     ▼
-ChatPromptTemplate → GPT-OSS-120B (Groq) → Answer
-```
+├── ChromaDB · faq (FAQ entries from CSV)
+├── ChromaDB · tickets (resolved support tickets from SQLite)
+└── ChromaDB · guides (PDF guide chunks)
+│
+▼
+ChatPromptTemplate → LLM (Groq) → Answer
 
-**Embedding model:** `sentence-transformers/all-MiniLM-L6-v2` (runs locally via HuggingFace)  
-**LLM:** `openai/gpt-oss-120b` served by [Groq](https://groq.com) (note: this project originally used `qwen/qwen3-32b`, which Groq later deprecated � swap in whichever production model is currently listed at console.groq.com/docs/models if this one changes too)
+**Embedding model:** `sentence-transformers/all-MiniLM-L6-v2` (runs locally via HuggingFace)
+**LLM:** `openai/gpt-oss-120b` served by [Groq](https://groq.com)
+
+> Note: this project originally used `qwen/qwen3-32b`, which Groq later deprecated. Groq's model catalog changes over time — if you hit a `model_not_found` error, check currently available models by querying `https://api.groq.com/openai/v1/models` with your API key, and swap in whichever production model is listed at [console.groq.com/docs/models](https://console.groq.com/docs/models).
 
 ## Project Structure
-
-```
 rag-telecom-chatbot/
-├── app.py              # Streamlit web UI
-├── main.py             # CLI entry point
-├── rag_chain.py        # Builds the LangChain RAG chain
-├── retriever.py        # Merges the three Chroma retrievers
-├── ingest_faq.py       # Loads data/faq.csv → Chroma 'faq' collection
-├── ingest_tickets.py   # Loads data/tickets.db → Chroma 'tickets' collection
-├── ingest_pdf.py       # Loads data/telecom_guide.pdf → Chroma 'guides' collection
+├── app.py # Streamlit web UI
+├── main.py # CLI entry point
+├── rag_chain.py # Builds the LangChain RAG chain
+├── retriever.py # Merges the three Chroma retrievers
+├── ingest_faq.py # Loads data/faq.csv into the 'faq' Chroma collection
+├── ingest_tickets.py # Loads data/tickets.db into the 'tickets' Chroma collection
+├── ingest_pdf.py # Loads data/telecom_guide.pdf into the 'guides' Chroma collection
 ├── data/
-│   ├── faq.csv             # FAQ question/answer pairs
-│   ├── tickets.db          # SQLite database of resolved support tickets
-│   ├── telecom_guide.pdf   # Telecom user guide (chunked at ingest)
-│   ├── seed_tickets.py     # Script to seed the tickets database
-│   └── generate_pdf.py     # Script to generate the telecom guide PDF
-├── chroma_store/       # Persisted Chroma vector database (created at ingest)
+│ ├── faq.csv # FAQ question/answer pairs
+│ ├── tickets.db # SQLite database of resolved support tickets
+│ ├── telecom_guide.pdf # Telecom user guide (chunked at ingest)
+│ ├── seed_tickets.py # Script to seed the tickets database
+│ └── generate_pdf.py # Script to generate the telecom guide PDF
+├── chroma_store/ # Persisted Chroma vector database (created at ingest)
 ├── pyproject.toml
 ├── uv.lock
 └── .env.example
-```
+
 
 ## Prerequisites
 
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/) (recommended) or pip
-- A [Groq API key](https://console.groq.com)
-- A [HuggingFace token](https://huggingface.co/settings/tokens) *(optional � only needed to avoid a rate-limit warning on first download; the app works fine without it)*
+- A free [Groq API key](https://console.groq.com)
+- A [HuggingFace token](https://huggingface.co/settings/tokens) *(optional — only avoids a rate-limit warning on the first model download; the app works fine without it)*
 
 ## Setup
 
 **1. Clone and install dependencies**
 
 ```bash
-git clone <repo-url>
-cd rag-telecom-chatbot
-uv sync          # or: pip install -e .
+git clone https://github.com/aleezafatima944-collab/telecom-rag-chatbot.git
+cd telecom-rag-chatbot
+uv sync
 ```
 
 **2. Configure environment variables**
@@ -66,16 +63,9 @@ uv sync          # or: pip install -e .
 cp .env.example .env
 ```
 
-Edit `.env` and fill in your keys:
-
-```
-GROQ_API_KEY=your_groq_api_key_here
-HF_TOKEN=your_huggingface_token_here
-```
+Edit `.env` and fill in your key:
 
 **3. Ingest data into Chroma**
-
-Run the three ingestion scripts once to build the vector store:
 
 ```bash
 python ingest_faq.py
@@ -116,11 +106,16 @@ The retriever fetches the top 3 results from each collection (9 context document
 ## Regenerating Seed Data
 
 ```bash
-# Seed the SQLite ticket database
 python data/seed_tickets.py
-
-# Regenerate the PDF guide
 python data/generate_pdf.py
 ```
 
 After regenerating, re-run the corresponding ingest script.
+
+## Possible Improvements
+
+- Retrieval evaluation (precision/recall on a test query set)
+- Query routing or hybrid search instead of always searching all 3 collections
+- Conversation memory for multi-turn follow-ups
+- Re-ranking retrieved chunks before generation
+  
